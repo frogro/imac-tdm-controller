@@ -131,11 +131,24 @@ class RawREPL:
         self.port.rts = False
         self.port.port = port
         self.port.open()
-        self.port.write(b'\r\x03\x03')
-        time.sleep(.3)
-        self.port.reset_input_buffer()
-        self.port.write(b'\r\x01')
-        self.until(b'raw REPL; CTRL-B to exit\r\n>')
+        # Opening the UART can reset an ESP32. The first input may only wake
+        # CircuitPython's serial console, so allow boot and retry the handshake.
+        try:
+            time.sleep(2)
+            for attempt in range(3):
+                self.port.write(b'\r\x03\x03')
+                time.sleep(.5)
+                self.port.reset_input_buffer()
+                self.port.write(b'\r\x01')
+                try:
+                    self.until(b'raw REPL; CTRL-B to exit\r\n>', timeout=4)
+                    break
+                except ValueError:
+                    if attempt == 2:
+                        raise
+        except Exception:
+            self.port.close()
+            raise
 
     def until(self, suffix, timeout=8):
         output = bytearray()

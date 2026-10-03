@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 ROOT=Path(__file__).resolve().parents[1]
 def module(name,filename):
@@ -23,6 +23,21 @@ class InstallerTests(unittest.TestCase):
                 values=button.parse_settings(path)
                 self.assertEqual(values['BUTTON_PIN'],pin)
                 self.assertEqual(values['BUTTON_WIFI_PASSWORD'],'abc"defgh')
+
+    def test_serial_console_retries_after_boot_and_closes_on_failure(self):
+        serial = MagicMock()
+        port = serial.Serial.return_value
+        with patch.dict('sys.modules', {'serial': serial}), patch.object(button.time, 'sleep'):
+            with patch.object(button.RawREPL, 'until', side_effect=[ValueError('booting'), b'raw REPL']):
+                repl = button.RawREPL('/dev/test')
+                self.assertEqual(port.write.call_count, 4)
+                repl.close()
+            port.reset_mock()
+            with patch.object(button.RawREPL, 'until', side_effect=ValueError('offline')):
+                with self.assertRaises(ValueError):
+                    button.RawREPL('/dev/test')
+                self.assertEqual(port.write.call_count, 6)
+                port.close.assert_called_once()
 
     def test_firmware_corruption_rejected(self):
         with patch.object(button.urllib.request,'urlopen') as fetch:

@@ -2,7 +2,7 @@
 
 ## Lokal durchgeführt
 
-- 19 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
+- 20 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
   kein zusätzlicher Kurzdruck nach langem Halten, kein Befehl bei gedrücktem Taster
   nach Neustart/Verbindungswechsel, Zustandstabelle, Ticketablauf und doppelte
   Requests, Phasenwechsel, Sperre während Boot, HID-Schreibfehler, Power-Release,
@@ -63,3 +63,10 @@ vollständige Images erzeugt. Der Autostart bootet in QEMU ohne Tastenaktion und
 zusätzliches internes Laufwerk bis zur TinyCore-Konsole (`phase=tinycore`).
 Der wartende Modus bleibt nach `l` mit dem Hinweis auf das fehlende interne Linux
 im Menü (`phase=menu`); `t` startet anschließend TinyCore (`phase=tinycore`).
+
+## TinyPICO am ThinkPad
+
+CircuitPython 10.3.1 wurde auf dem angeschlossenen TinyPICO gestartet. Der
+Installer konnte nach robusterem UART-Verbindungsaufbau die Boardkennung
+`unexpectedmaker_tinypico` über Raw-REPL auslesen. Dateiübertragung, Taster und
+WLAN-Verbindung sind damit noch nicht als Hardwaretests abgeschlossen.
