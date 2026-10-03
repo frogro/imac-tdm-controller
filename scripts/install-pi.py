@@ -34,6 +34,18 @@ def load_button_settings(path):
     return data
 
 
+def has_existing_dwc2(config):
+    # Stock images include a CM5-only host overlay, which does not apply to Zero.
+    section = 'all'
+    for line in config.splitlines():
+        line = line.split('#', 1)[0].strip()
+        if line.startswith('[') and line.endswith(']'):
+            section = line[1:-1]
+        elif section not in ('cm4', 'cm5', 'none') and re.match(r'dtoverlay\s*=\s*dwc2(?:,|$)', line):
+            return True
+    return False
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--image', type=Path, required=True)
@@ -69,7 +81,7 @@ def main():
     boot = Path('/boot/firmware/config.txt')
     if not boot.exists(): boot = Path('/boot/config.txt')
     old = boot.read_text()
-    if 'dtoverlay=dwc2' in old or 'g_ether' in (boot.parent/'cmdline.txt').read_text():
+    if has_existing_dwc2(old) or 'g_ether' in (boot.parent/'cmdline.txt').read_text():
         p.error('Existing gadget configuration found; reconcile it before installation')
     password = existing['BUTTON_WIFI_PASSWORD'] if existing else getpass.getpass('Neues Passwort für das Pi-WLAN (8–63 ASCII-Zeichen): ')
     if not 8 <= len(password) <= 63 or not re.fullmatch(r'[A-Za-z0-9_-]+', password):

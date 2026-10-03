@@ -77,6 +77,13 @@ class InstallerTests(unittest.TestCase):
             path.write_text(text.replace('a'*64, 'short'))
             with self.assertRaises(ValueError): pi.load_button_settings(path)
 
+    def test_pi_stock_cm5_overlay_does_not_block_zero(self):
+        pi = module('pi_overlay', 'scripts/install-pi.py')
+        self.assertFalse(pi.has_existing_dwc2('[cm5]\ndtoverlay=dwc2,dr_mode=host\n[all]\n'))
+        self.assertFalse(pi.has_existing_dwc2('#dtoverlay=dwc2\n'))
+        self.assertTrue(pi.has_existing_dwc2('[all]\ndtoverlay=dwc2,dr_mode=peripheral\n'))
+        self.assertTrue(pi.has_existing_dwc2('[pi0]\ndtoverlay = dwc2\n'))
+
     def test_pi_installer_refuses_build_host(self):
         # No privileges requested and no files changed on this non-Pi test machine.
         if Path('/proc/device-tree/model').exists():self.skipTest('Run this assertion on a non-Pi host')
