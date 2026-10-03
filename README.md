@@ -32,7 +32,8 @@ wird noch nicht ermittelt. Details stehen in [Tests und Grenzen](docs/testing.md
   Für den ursprünglichen Zero W die **32-Bit-Ausgabe** verwenden.
 - USB-Datenverbindung vom Pi-Port **USB**, nicht **PWR IN**, zum iMac.
 - Pico W oder ein üblicher **ESP32 DevKit v1 mit ESP32-WROOM-32 und 4 MB Flash**,
-  alternativ ESP32-DevKitC V4/WROOM-32E, und ein normal offener Taster.
+  alternativ ESP32-DevKitC V4/WROOM-32E oder **TinyPICO V3 USB-C**,
+  und ein normal offener Taster.
   S2/S3/C3 benötigen andere Firmware und werden nicht mit diesen Profilen geflasht.
 - Ein x86_64-Linux-Rechner zum Erzeugen des Bootimages.
 - Nur für die Wahl zwischen Monitor und Rechner: ein internes Linux mit
@@ -42,8 +43,8 @@ wird noch nicht ermittelt. Details stehen in [Tests und Grenzen](docs/testing.md
 
 Der Pi muss vor dem iMac betriebsbereit sein. Bei separater Stromversorgung eine
 für USB-Gerätebetrieb geeignete Versorgung/Kabellösung ohne Rückspeisung verwenden.
-Der Taster braucht eine eigene Versorgung, beispielsweise per USB. Batteriebetrieb
-mit Tiefschlaf ist noch nicht umgesetzt.
+Der Taster braucht eine eigene Versorgung, beispielsweise per USB oder beim
+TinyPICO per LiPo-Akku. Tiefschlaf ist noch nicht umgesetzt; WLAN bleibt aktiv.
 
 ## 1. Projekt herunterladen
 
@@ -167,7 +168,7 @@ interaktiv abgefragt. Passwörter und Token werden verdeckt eingegeben.
   gedrücktem BOOTSEL anschließen und sein `RPI-RP2`-Laufwerk auswählen. Nach dem
   Firmwarewechsel das neue `CIRCUITPY`-Laufwerk auswählen. Der Installer prüft die
   Boardkennung und kopiert Konfiguration und Tastercode mit Rückleseprüfung.
-- **ESP32 DevKit v1 oder DevKitC V4:** Installation über den ausgewählten seriellen
+- **ESP32 DevKit v1, DevKitC V4 oder TinyPICO:** Installation über den ausgewählten seriellen
   USB-Port. Der Installer kann den Flash nach ausdrücklicher Bestätigung löschen,
   die passende CircuitPython-Firmware schreiben und die Tasterdateien über die
   serielle Konsole übertragen. Auch hier erfolgt eine Rückleseprüfung.
@@ -181,7 +182,7 @@ python3 -m pip install 'esptool>=5,<6' pyserial
 python3 scripts/install-button.py --settings /pfad/button-settings.toml
 ```
 
-CircuitPython ist auf beiden Boards derselbe **Programmcode**, aber die Firmware
+CircuitPython ist auf allen unterstützten Boards derselbe **Programmcode**, aber die Firmware
 ist jeweils boardspezifisch. Bestehende Board-Dateien vor Neuinstallation sichern.
 Der Installer fragt vor Firmware- und Dateischreibzugriffen nach Bestätigung.
 Bei seriellen Zugriffsproblemen Portberechtigungen prüfen und andere Serial-Monitore
@@ -201,10 +202,11 @@ python3 scripts/install-button.py --settings /pfad/button-settings.toml \
 | Pico W | GP15, physischer Pin 20 | GND, physischer Pin 18 |
 | ESP32 DevKit v1 / WROOM-32 | Beschriftung GPIO4/IO4 | Beschriftung GND |
 | ESP32-DevKitC V4 / WROOM-32E | GPIO4/IO4, J3 Pin 13 | GND, J3 Pin 1 |
+| TinyPICO V3 USB-C | Beschriftung 25 / GPIO25 | Beschriftung GND |
 
 Der Installer setzt den passenden CircuitPython-Pinnamen automatisch: `GP15`
 beim Pico W, `D4` beim ESP32 DevKit v1 und `IO4` beim DevKitC V4. Beide ESP32-Namen
-bezeichnen GPIO4.
+bezeichnen GPIO4. Beim TinyPICO setzt er `IO25` für GPIO25.
 
 Der Taster verbindet beim Drücken **GPIO mit Masse**. Ein interner Pull-up wird
 aktiviert; kein externer Widerstand nötig. Nicht an 5 V oder 3,3 V anschließen.
@@ -212,6 +214,24 @@ Bei vierbeinigen Tastern auf die intern verbundenen Beinpaare achten.
 
 Pinquellen: [Pico-W-Datenblatt](https://datasheets.raspberrypi.com/picow/pico-w-datasheet.pdf),
 [ESP32-DevKitC V4](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32/esp32-devkitc/user_guide.html#header-block).
+
+### TinyPICO mit Akku
+
+Für den WLAN-Taster reichen TinyPICO, ein Taster zwischen **25 und GND** sowie ein
+**geschützter 1S-LiPo-Akku mit 3,7 V Nennspannung (maximal 4,2 V)** am JST-Anschluss.
+Die Polarität muss zur Markierung **+ und −** auf der Platine passen. Falls der
+JST-Anschluss lose beiliegt, muss er zuerst eingelötet werden.
+Ein USB-C-Datenkabel wird zum Einrichten und Laden benötigt. Die Ladeelektronik
+ist bereits auf dem Board; ein zusätzliches Ladegerät-Modul oder Tasterwiderstand
+ist nicht nötig. Der Pi bleibt als Gegenstelle erforderlich.
+
+Die Firmware hält WLAN momentan dauerhaft verbunden und nutzt keinen Tiefschlaf.
+Die Akkulaufzeit ist noch nicht am Gerät gemessen. Die RGB-LED wird nicht als
+Statusanzeige angesteuert.
+
+Quellen: [Akku und Laden beim Hersteller](https://help.unexpectedmaker.com/docs/power/battery-power/),
+[TinyPICO-Firmware](https://circuitpython.org/board/unexpectedmaker_tinypico/),
+[GPIO25 in CircuitPython](https://github.com/adafruit/circuitpython/blob/10.3.1/ports/espressif/boards/unexpectedmaker_tinypico/pins.c).
 
 ## 6. Power-Taste im internen Linux aktivieren
 

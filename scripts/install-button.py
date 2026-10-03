@@ -26,6 +26,9 @@ PROFILES = {
     'esp32-devkitc': dict(label='ESP32-DevKitC V4 / ESP32-WROOM-32E (4 MB)', pin='IO4',
                   wire='GPIO4 / IO4 (J3 Pin 13) ↔ Taster ↔ GND (J3 Pin 1)',
                   board_id='espressif_esp32_devkitc_v4_wroom_32e', transport='serial'),
+    'tinypico': dict(label='Unexpected Maker TinyPICO V3 USB-C', pin='IO25',
+                  wire='GPIO25 / 25 ↔ Taster ↔ GND (Beschriftung auf der Platine)',
+                  board_id='unexpectedmaker_tinypico', transport='serial'),
 }
 
 
@@ -218,10 +221,10 @@ def main():
     parser.add_argument('--settings', type=Path, help='Vom Pi-Installer erzeugte button-settings.toml')
     parser.add_argument('--prepare-only', type=Path, help='Dateien lokal vorbereiten, ohne ein Board zu verändern')
     args = parser.parse_args()
-    print('WLAN-Taster einrichten — gleicher CircuitPython-Code für beide Boards')
+    print('WLAN-Taster einrichten — gleicher CircuitPython-Code für alle unterstützten Boards')
     keys = list(PROFILES)
     for n, key in enumerate(keys, 1): print(f'{n}: {PROFILES[key]["label"]}')
-    index = int(input('Board auswählen [1/2/3]: '))-1
+    index = int(input('Board auswählen [' + '/'.join(str(n) for n in range(1, len(keys)+1)) + ']: '))-1
     if not 0 <= index < len(keys): raise ValueError('Ungültige Boardauswahl')
     key = keys[index]; profile = PROFILES[key]
     if args.settings:
@@ -251,6 +254,9 @@ def main():
     print(profile['wire'])
     print('Normal offenen Taster verwenden. Interner Pull-up ist aktiviert; kein externer Widerstand nötig.')
     print('Taster nur zwischen GPIO und GND anschließen, nicht an 5 V oder 3,3 V.')
+    if key == 'tinypico':
+        print('Akku: geschützter 1S-LiPo (3,7 V) am JST-Anschluss; +/− prüfen. Laden über USB-C.')
+        print('Noch kein Tiefschlaf: WLAN bleibt eingeschaltet.')
     print('Kurz: beim Loslassen. Lang: ab 3 Sekunden, nur einmal pro Druck.')
 
 

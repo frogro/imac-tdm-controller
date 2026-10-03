@@ -19,5 +19,12 @@
     "url": "https://downloads.circuitpython.org/bin/doit_esp32_devkit_v1/en_US/adafruit-circuitpython-doit_esp32_devkit_v1-en_US-10.3.1.bin",
     "size": 1812096,
     "sha256": "e295e1f73324635f2337747db2aa21b58e1a2a4d1ba0187416d5f9735f51ba9a"
+  },
+  "tinypico": {
+    "board_id": "unexpectedmaker_tinypico",
+    "version": "10.3.1",
+    "url": "https://downloads.circuitpython.org/bin/unexpectedmaker_tinypico/en_US/adafruit-circuitpython-unexpectedmaker_tinypico-en_US-10.3.1.bin",
+    "size": 1894752,
+    "sha256": "189023e98d5da14e83cb08ae8e6346dd1913b82bc2cbafe457299099c11b8ddd"
   }
 }

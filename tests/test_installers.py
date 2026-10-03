@@ -16,7 +16,7 @@ build=module('builder','scripts/build-image.py')
 
 class InstallerTests(unittest.TestCase):
     def test_board_settings_and_escaping(self):
-        for board,pin in [('pico-w','GP15'),('esp32','D4')]:
+        for board,pin in [('pico-w','GP15'),('esp32','D4'),('esp32-devkitc','IO4'),('tinypico','IO25')]:
             data=button.settings_text(button.PROFILES[board],'A"B','abc"defgh','192.168.77.1','x'*64)
             with tempfile.TemporaryDirectory() as tmp:
                 path=Path(tmp)/'settings.toml';path.write_text(data)
@@ -55,7 +55,7 @@ class InstallerTests(unittest.TestCase):
         self.assertNotEqual(result.returncode,0)
         self.assertIn('Run this installer on',result.stderr)
 
-    def test_prepare_only_for_both_boards(self):
+    def test_prepare_only_for_all_boards(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);settings=root/'settings.toml'
             settings.write_text(button.settings_text(button.PROFILES['pico-w'],'iMac-TDM','test-password','192.168.77.1','x'*64))

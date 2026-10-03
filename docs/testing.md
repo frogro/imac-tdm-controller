@@ -8,11 +8,11 @@
   Requests, Phasenwechsel, Sperre während Boot, HID-Schreibfehler, Power-Release,
   authentifizierte HTTP-Anfragen an einen echten lokalen Testserver.
 - Installer: Konfigurationsquotierung, Boardprofile/Pinangaben, Ablehnung falscher
-  Laufwerke, fehlerhafte Firmwareprüfsummen, Prepare-only für alle drei Profile,
+  Laufwerke, fehlerhafte Firmwareprüfsummen, Prepare-only für alle vier Profile,
   GRUB-Konfigurationsvalidierung, automatische EFI-Zielerkennung und Ablehnung des Pi-Installers auf dem Build-PC.
 - Syntaxprüfung der Python-/Shell-Dateien und statisches Kompilieren des
   TinyCore-Empfängers mit `-Wall -Wextra -Werror`.
-- CircuitPython 10.3.1 für Pico W, ESP32 DevKit v1 und ESP32-DevKitC V4/WROOM-32E
+- CircuitPython 10.3.1 für Pico W, ESP32 DevKit v1, ESP32-DevKitC V4/WROOM-32E und TinyPICO
   vom offiziellen Downloadserver geladen und die SHA-256-Werte festgehalten.
 
 ## QEMU/UEFI

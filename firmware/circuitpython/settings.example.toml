@@ -3,7 +3,7 @@ BUTTON_WIFI_PASSWORD = "REPLACE_WITH_PI_AP_PASSWORD"
 CONTROLLER_HOST = "192.168.77.1"
 CONTROLLER_PORT = "8080"
 CONTROLLER_TOKEN = "REPLACE_WITH_TOKEN_FROM_PI_INSTALLER"
-# Pico W: GP15. ESP32 DevKit v1: D4; DevKitC V4: IO4 (verify your board's CircuitPython pin name).
+# Pico W: GP15. ESP32 DevKit v1: D4; DevKitC V4: IO4; TinyPICO: IO25.
 BUTTON_PIN = "GP15"
 # Optional status LED. Pico W: LED. Leave empty for boards with addressable LEDs.
 LED_PIN = ""
