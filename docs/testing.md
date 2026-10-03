@@ -68,5 +68,7 @@ im Menü (`phase=menu`); `t` startet anschließend TinyCore (`phase=tinycore`).
 
 CircuitPython 10.3.1 wurde auf dem angeschlossenen TinyPICO gestartet. Der
 Installer konnte nach robusterem UART-Verbindungsaufbau die Boardkennung
-`unexpectedmaker_tinypico` über Raw-REPL auslesen. Dateiübertragung, Taster und
-WLAN-Verbindung sind damit noch nicht als Hardwaretests abgeschlossen.
+`unexpectedmaker_tinypico` über Raw-REPL auslesen. Zusätzlich wurden mit `supervisor.runtime.autoreload = False` eine temporäre
+Testdatei geschrieben, zurückgelesen, entfernt und `os.sync()` ausgeführt.
+Die vollständige Tasterinstallation sowie Taster und WLAN-Verbindung sind damit
+noch nicht als Hardwaretests abgeschlossen.

@@ -212,7 +212,7 @@ def install_esp(profile, files, fresh):
         if board_id != profile['board_id']:
             raise ValueError('Installiertes CircuitPython passt nicht zum gewählten Board')
         confirmed(f'Tasterdateien und WLAN-Konfiguration auf {port} installieren/ersetzen.')
-        repl.execute('import supervisor; supervisor.disable_autoreload()')
+        repl.execute('import supervisor; supervisor.runtime.autoreload = False')
         for name, data in files.items():
             repl.execute(f'f=open({name!r},"wb"); f.close()')
             for start in range(0, len(data), 192):
