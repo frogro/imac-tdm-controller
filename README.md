@@ -35,7 +35,9 @@ wird noch nicht ermittelt. Details stehen in [Tests und Grenzen](docs/testing.md
   alternativ ESP32-DevKitC V4/WROOM-32E, und ein normal offener Taster.
   S2/S3/C3 benötigen andere Firmware und werden nicht mit diesen Profilen geflasht.
 - Ein x86_64-Linux-Rechner zum Erzeugen des Bootimages.
-- Ein internes Linux mit **EFI-Bootloader**. Alte BIOS/Legacy-Installationen werden
+- Nur für die Wahl zwischen Monitor und Rechner: ein internes Linux mit
+  **EFI-Bootloader**. Im reinen Monitorbetrieb ist keine HDD/SSD nötig.
+  Alte BIOS/Legacy-Installationen werden
   von dieser ersten Fassung nicht automatisch gestartet.
 
 Der Pi muss vor dem iMac betriebsbereit sein. Bei separater Stromversorgung eine
@@ -94,6 +96,32 @@ Optional `--ssh-key ~/.ssh/id_ed25519.pub` für TinyCore-Wartung ergänzen. SSH 
 weiterhin eine Netzwerkverbindung zum iMac; die Tastersteuerung selbst benötigt sie
 nicht. Ohne diese Option bleibt SSH aus. `--source /pfad/tinycore-tdm` verwendet
 statt Downloads einen vollständigen lokalen Checkout mit gültigem Manifest.
+
+### Ohne interne HDD/SSD: zwei Monitor-Optionen
+
+**Auf Tastendruck warten:** GRUB bleibt im Menü. Kurz drücken startet TinyCore/TDM.
+Langes Drücken zeigt „Kein internes Linux eingerichtet“ und kehrt ins Menü zurück.
+
+```sh
+python3 scripts/build-image.py --tdm-only --output build/tdm-only.img
+```
+
+**Direkt als Monitor starten:** GRUB startet TinyCore ohne Menüwartezeit. TinyCore
+aktiviert anschließend TDM; die normale Linux-Bootzeit und TDM-Startverzögerung bleiben.
+
+```sh
+python3 scripts/build-image.py --tdm-autostart --output build/tdm-autostart.img
+```
+
+Diese beiden Alternativen benötigen **kein internes Bootziel und keine zusätzliche
+interne oder externe HDD/SSD**. Schritt 2 und die Einrichtung des internen Linux
+in Schritt 6 entfallen. Pi, microSD und USB-Verbindung zum iMac werden weiterhin
+benötigt. Im laufenden TinyCore fährt langes Drücken den iMac herunter.
+
+Jeweils genau eine Option wählen; nicht mit `--internal-config`, `--internal-uuid`
+oder `--internal-loader` kombinieren. `--source` und `--ssh-key` bleiben verfügbar.
+Ohne diese Monitor-Optionen gilt weiterhin die Auswahl zwischen TDM und internem
+Linux. Nach einem TinyCore-Bootfehler bleibt GRUB im Menü, auch bei Autostart.
 
 ## 4. Pi einrichten
 
@@ -208,7 +236,9 @@ Anzeige zurück“ ist keine Aktion des WLAN-Tasters.
 
 1. Pi starten und warten, bis sein WLAN und USB-Gerät verfügbar sind.
 2. Beim iMac zunächst mit Alt/Option das USB-EFI-Bootmedium wählen.
-3. GRUB wartet unbegrenzt: kurz für TDM, drei Sekunden halten für internes Linux.
+3. Standard: GRUB wartet unbegrenzt; kurz für TDM, lange für internes Linux.
+   Mit `--tdm-only` gibt es kein internes Bootziel; mit `--tdm-autostart` entfällt
+   die Menüwartezeit.
 4. Im laufenden System löst erneutes langes Drücken die HID-Power-Taste aus.
 
 Zum ersten Test kann eine normale Tastatur im GRUB-Menü `T` oder `L` senden.

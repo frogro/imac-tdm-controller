@@ -75,3 +75,31 @@ class BootTargetTests(unittest.TestCase):
         disk['tran']='usb'
         with self.assertRaises(ValueError):helper.inspect(efi,[disk])
         with self.assertRaises(ValueError):helper.inspect('BootCurrent: 0001\nBoot0001* Legacy\n',[])
+
+class MonitorModeTests(unittest.TestCase):
+    def test_monitor_modes_do_not_reference_internal_disks(self):
+        for flag, timeout in [('tdm_only', -1), ('tdm_autostart', 0)]:
+            config = build.grub_config(**{flag: True})
+            self.assertTrue(config.startswith(f'set timeout={timeout}\n'))
+            self.assertNotIn('chainloader', config)
+            self.assertNotIn('--fs-uuid', config)
+            self.assertNotIn('set phase=linux', config)
+            self.assertIn('--hotkey=t', config)
+            self.assertIn('--hotkey=l', config)
+            self.assertIn('Kein internes Linux eingerichtet', config)
+            # Failed autostart must stop at the menu rather than loop.
+            self.assertIn('  set timeout=-1\n  set root=$tdm_disk\n  if linux', config)
+
+    def test_conflicting_modes_or_targets_rejected_before_build(self):
+        for flags in [
+            ['--tdm-only', '--tdm-autostart'],
+            ['--tdm-only', '--internal-uuid', '1234', '--internal-loader', '/EFI/test.efi'],
+            ['--tdm-autostart', '--internal-config', '/does/not/exist'],
+        ]:
+            with tempfile.TemporaryDirectory() as tmp:
+                output=Path(tmp)/'out.img'
+                result=subprocess.run(['python3',str(ROOT/'scripts/build-image.py'),'--output',str(output)]+flags,capture_output=True,text=True)
+                self.assertEqual(result.returncode,2)
+                self.assertFalse(output.exists())
+        with self.assertRaises(ValueError): build.grub_config(tdm_only=True,tdm_autostart=True)
+        with self.assertRaises(ValueError): build.grub_config('1234','/EFI/a.efi',tdm_only=True)

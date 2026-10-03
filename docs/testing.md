@@ -2,7 +2,7 @@
 
 ## Lokal durchgeführt
 
-- 17 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
+- 19 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
   kein zusätzlicher Kurzdruck nach langem Halten, kein Befehl bei gedrücktem Taster
   nach Neustart/Verbindungswechsel, Zustandstabelle, Ticketablauf und doppelte
   Requests, Phasenwechsel, Sperre während Boot, HID-Schreibfehler, Power-Release,
@@ -54,3 +54,12 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q controller scripts firmware/circuitpython
 gcc -static -Os -Wall -Wextra -Werror -o /tmp/tdm-power-listener tinycore/power-listener.c
 ```
+
+## Monitor-Modi
+
+Zusätzliche Tests prüfen beide Konfigurationen ohne internes Bootziel sowie
+unzulässige Kombinationen von Modus und interner Partition. Für beide Modi wurden
+vollständige Images erzeugt. Der Autostart bootet in QEMU ohne Tastenaktion und ohne
+zusätzliches internes Laufwerk bis zur TinyCore-Konsole (`phase=tinycore`).
+Der wartende Modus bleibt nach `l` mit dem Hinweis auf das fehlende interne Linux
+im Menü (`phase=menu`); `t` startet anschließend TinyCore (`phase=tinycore`).

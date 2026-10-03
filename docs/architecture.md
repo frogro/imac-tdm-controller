@@ -54,3 +54,14 @@ Input-Geräte mit passender USB-Kennung und Produktname. Bei `KEY_POWER`, Wert 1
 ruft es `/sbin/poweroff` auf. Ein vorhandenes Linux-Input-Gerät allein ist keine
 Freigabe: Geräte-ID und Name müssen passen. Es gibt keinen allgemeinen
 Shell-Befehlsparser und keinen Ausschalt-Netzwerkdienst im iMac.
+
+## Monitorbetrieb ohne internes Bootziel
+
+Der Builder bietet zwei alternative Modi: `--tdm-only` wartet im Menü,
+`--tdm-autostart` setzt beim ersten Menüzugang `timeout=0`. Beide enthalten keinen
+Chainloader und keine Suche nach einer internen Partition. `l` zeigt im Menü nur
+einen Hinweis und lässt `phase=menu` bestehen. Vor dem TinyCore-Start wird das
+Zeitlimit auf `-1` gesetzt: Schlägt das Laden fehl, bleibt das Menü offen und es
+entsteht keine Autostartschleife. Nach erfolgreicher Übergabe gilt weiterhin
+`phase=tinycore`; die Power-Tastenbehandlung im laufenden TinyCore bleibt gleich.
+Die Image-Begleitdatei enthält `boot_mode` (`dual`, `tdm-only`, `tdm-autostart`).

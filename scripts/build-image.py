@@ -67,12 +67,19 @@ def state_offset(fat, disk_offset=1024**2):
     raise ValueError('STATE.ENV missing')
 
 
-def grub_config(uuid, loader):
-    if not re.fullmatch(r'[A-Za-z0-9-]+', uuid):
-        raise ValueError('Invalid filesystem UUID')
-    if not re.fullmatch(r'/[A-Za-z0-9_./+-]+\.efi', loader) or '..' in loader.split('/'):
-        raise ValueError('Expected an absolute EFI loader path without spaces or traversal')
-    return f'''set timeout=-1
+def grub_config(uuid=None, loader=None, *, tdm_only=False, tdm_autostart=False):
+    if tdm_only and tdm_autostart:
+        raise ValueError('Choose either --tdm-only or --tdm-autostart')
+    monitor_only = tdm_only or tdm_autostart
+    if monitor_only:
+        if uuid or loader:
+            raise ValueError('Monitor-only modes do not accept an internal boot target')
+    else:
+        if not isinstance(uuid, str) or not re.fullmatch(r'[A-Za-z0-9-]+', uuid):
+            raise ValueError('Invalid filesystem UUID')
+        if not isinstance(loader, str) or not re.fullmatch(r'/[A-Za-z0-9_./+-]+\.efi', loader) or '..' in loader.split('/'):
+            raise ValueError('Expected an absolute EFI loader path without spaces or traversal')
+    config = f'''set timeout={0 if tdm_autostart else -1}
 set default=0
 set timeout_style=menu
 search --no-floppy --label TINYCORE --set=tdm_disk
@@ -84,6 +91,7 @@ else
   echo "Controller-Status konnte nicht gespeichert werden; normale Tastatur verwenden."
 fi
 menuentry "TinyCore - Monitorbetrieb (kurz / T)" --hotkey=t {{
+  set timeout=-1
   set root=$tdm_disk
   if linux /boot/vmlinuz loglevel=3 kmap=qwertz/de-latin1 waitusb=10 tce=LABEL=TINYCORE tdm_autostart=1; then
     if initrd /boot/corepure64.gz /boot/custom.gz /boot/controller.gz; then
@@ -97,6 +105,18 @@ menuentry "TinyCore - Monitorbetrieb (kurz / T)" --hotkey=t {{
   save_env -f ($tdm_disk)/STATE.ENV phase
   sleep 3
 }}
+'''
+    if monitor_only:
+        config += '''menuentry "Kein internes Linux eingerichtet (lang / L)" --hotkey=l {
+  set timeout=-1
+  echo "Kein internes Linux eingerichtet. Kurz druecken / T startet TDM."
+  set phase=menu
+  save_env -f ($tdm_disk)/STATE.ENV phase
+  sleep 3
+}
+'''
+    else:
+        config += f'''
 menuentry "Internes Linux (lang / L)" --hotkey=l {{
   if search --no-floppy --fs-uuid --set=internal {uuid}; then
     if chainloader ($internal){loader}; then
@@ -111,6 +131,7 @@ menuentry "Internes Linux (lang / L)" --hotkey=l {{
   sleep 3
 }}
 '''
+    return config
 
 
 def main():
@@ -121,16 +142,23 @@ def main():
     p.add_argument('--source', type=Path, help='Offline tinycore-tdm checkout including scripts and optional packages')
     p.add_argument('--ssh-key', type=Path, help='Optional public key for TinyCore maintenance')
     p.add_argument('--internal-config', type=Path, help='JSON from inspect-linux.py on the iMac')
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument('--tdm-only', action='store_true', help='Monitor-only: wait in GRUB, no internal disk required')
+    mode.add_argument('--tdm-autostart', action='store_true', help='Monitor-only: boot TinyCore immediately, no internal disk required')
     args = p.parse_args()
+    monitor_only = args.tdm_only or args.tdm_autostart
+    if monitor_only and (args.internal_config or args.internal_uuid or args.internal_loader):
+        p.error('Monitor-only modes cannot be combined with an internal boot target')
     if args.internal_config:
         if args.internal_uuid or args.internal_loader:
             p.error('Use --internal-config or the two explicit target flags')
         target = json.loads(args.internal_config.read_text())
         args.internal_uuid = target['internal_uuid']
         args.internal_loader = target['internal_loader']
-    if not args.internal_uuid or not args.internal_loader:
-        p.error('Provide --internal-config or --internal-uuid and --internal-loader')
-    config_text = grub_config(args.internal_uuid, args.internal_loader)
+    if not monitor_only and (not args.internal_uuid or not args.internal_loader):
+        p.error('Provide an internal boot target, --tdm-only or --tdm-autostart')
+    config_text = grub_config(args.internal_uuid, args.internal_loader,
+                              tdm_only=args.tdm_only, tdm_autostart=args.tdm_autostart)
     output = args.output.resolve()
     if output.exists() or output.with_suffix('.json').exists():
         p.error('Output must be new; existing files are never overwritten')
@@ -201,7 +229,8 @@ def main():
             shutil.copyfileobj(src, out)
         metadata = dict(state_offset=offset, image_size=image.stat().st_size,
                         sha256=hashlib.sha256(image.read_bytes()).hexdigest(), upstream_commit=UPSTREAM,
-                        internal_uuid=args.internal_uuid, internal_loader=args.internal_loader)
+                        internal_uuid=args.internal_uuid, internal_loader=args.internal_loader,
+                        boot_mode='tdm-autostart' if args.tdm_autostart else 'tdm-only' if args.tdm_only else 'dual')
         # Exclusive publication: never replace a concurrently created output.
         os.link(image, output)
         with output.with_suffix('.json').open('x') as f:
