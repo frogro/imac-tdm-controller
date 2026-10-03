@@ -63,6 +63,20 @@ class InstallerTests(unittest.TestCase):
         for uuid,loader in [('bad;halt','/EFI/a.efi'),('1234','/EFI/../a.efi'),('1234','/EFI/a.efi;halt')]:
             with self.assertRaises(ValueError):build.grub_config(uuid,loader)
 
+    def test_pi_reuses_button_credentials_and_rejects_wrong_endpoint(self):
+        pi = module('pi_installer', 'scripts/install-pi.py')
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp)/'settings.toml'
+            text = button.settings_text(button.PROFILES['tinypico'], 'iMac-TDM', 'test-password', '192.168.77.1', 'a'*64)
+            path.write_text(text)
+            result = pi.load_button_settings(path)
+            self.assertEqual(result['CONTROLLER_TOKEN'], 'a'*64)
+            self.assertEqual(result['BUTTON_WIFI_PASSWORD'], 'test-password')
+            path.write_text(text.replace('192.168.77.1', '192.168.77.2'))
+            with self.assertRaises(ValueError): pi.load_button_settings(path)
+            path.write_text(text.replace('a'*64, 'short'))
+            with self.assertRaises(ValueError): pi.load_button_settings(path)
+
     def test_pi_installer_refuses_build_host(self):
         # No privileges requested and no files changed on this non-Pi test machine.
         if Path('/proc/device-tree/model').exists():self.skipTest('Run this assertion on a non-Pi host')

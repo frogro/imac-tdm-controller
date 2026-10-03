@@ -2,7 +2,7 @@
 
 ## Lokal durchgeführt
 
-- 20 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
+- 21 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
   kein zusätzlicher Kurzdruck nach langem Halten, kein Befehl bei gedrücktem Taster
   nach Neustart/Verbindungswechsel, Zustandstabelle, Ticketablauf und doppelte
   Requests, Phasenwechsel, Sperre während Boot, HID-Schreibfehler, Power-Release,
@@ -72,3 +72,8 @@ Installer konnte nach robusterem UART-Verbindungsaufbau die Boardkennung
 Testdatei geschrieben, zurückgelesen, entfernt und `os.sync()` ausgeführt.
 Die vollständige Tasterinstallation sowie Taster und WLAN-Verbindung sind damit
 noch nicht als Hardwaretests abgeschlossen.
+
+Kurzer und langer Tastendruck wurden danach am echten TinyPICO auf GPIO25/GND
+registriert. Über einen ThinkPad-Hotspot kamen beide Ereignisse authentifiziert
+bei der Controller-Testgegenstelle an (`boot_tinycore`, danach `power`). Die
+USB-Ausgabe war dabei simuliert; es wurde kein Rechner heruntergefahren.

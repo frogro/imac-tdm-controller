@@ -142,6 +142,14 @@ Danach mit `sudo raspi-config` das WLAN-Land setzen und den Pi neu starten.
 **Die bisherige WLAN-Verbindung des Pi wird durch den Access Point ersetzt.**
 Zur Einrichtung lokalen Zugriff oder eine zweite Verbindung bereithalten.
 
+Ist der Taster bereits eingerichtet, übernimmt `--settings /pfad/button-settings.toml`
+seine vorhandenen WLAN-Daten und den Token. Die Datei vertraulich übertragen;
+der Taster muss dafür nicht neu eingerichtet werden:
+
+```sh
+sudo python3 scripts/install-pi.py --image /pfad/imac-boot.img --settings /pfad/button-settings.toml
+```
+
 Der Installer erzeugt `/etc/imac-tdm-controller/button-settings.toml` mit den
 Zugangsdaten für den Taster. Diese Datei vertraulich auf den Einrichtungsrechner
 kopieren. Der API-Schlüssel wird nicht auf der Konsole ausgegeben.

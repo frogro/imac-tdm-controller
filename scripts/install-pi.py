@@ -11,6 +11,7 @@ import secrets
 import shutil
 import subprocess
 import uuid
+import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,10 +22,23 @@ def write(path, content, mode=0o644):
     path.chmod(mode)
 
 
+def load_button_settings(path):
+    data = tomllib.loads(path.read_text())
+    for key in ('BUTTON_WIFI_SSID', 'BUTTON_WIFI_PASSWORD', 'CONTROLLER_TOKEN'):
+        if not isinstance(data.get(key), str):
+            raise ValueError('Missing or invalid button setting: ' + key)
+    if not re.fullmatch(r'[A-Za-z0-9_-]{32,128}', data['CONTROLLER_TOKEN']):
+        raise ValueError('Invalid controller token')
+    if data.get('CONTROLLER_HOST') != '192.168.77.1' or str(data.get('CONTROLLER_PORT')) != '8080':
+        raise ValueError('Existing button must target 192.168.77.1:8080')
+    return data
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--image', type=Path, required=True)
-    p.add_argument('--ssid', default='iMac-TDM')
+    p.add_argument('--ssid')
+    p.add_argument('--settings', type=Path, help='Vorhandene vertrauliche Taster-Konfiguration übernehmen')
     args = p.parse_args()
     model_file = Path('/proc/device-tree/model')
     model = model_file.read_text().rstrip('\0') if model_file.exists() else ''
@@ -35,6 +49,8 @@ def main():
     for command in ('nmcli', 'systemctl', 'modprobe'):
         if shutil.which(command) is None:
             p.error('Install required tool first: '+command)
+    existing = load_button_settings(args.settings) if args.settings else None
+    args.ssid = args.ssid or (existing['BUTTON_WIFI_SSID'] if existing else 'iMac-TDM')
     if not re.fullmatch(r'[A-Za-z0-9_-]{1,32}', args.ssid):
         p.error('SSID: use 1–32 letters, digits, underscores or hyphens')
     image = args.image.resolve(strict=True)
@@ -55,12 +71,14 @@ def main():
     old = boot.read_text()
     if 'dtoverlay=dwc2' in old or 'g_ether' in (boot.parent/'cmdline.txt').read_text():
         p.error('Existing gadget configuration found; reconcile it before installation')
-    password = getpass.getpass('Neues Passwort für das Pi-WLAN (8–63 ASCII-Zeichen): ')
+    password = existing['BUTTON_WIFI_PASSWORD'] if existing else getpass.getpass('Neues Passwort für das Pi-WLAN (8–63 ASCII-Zeichen): ')
     if not 8 <= len(password) <= 63 or not re.fullmatch(r'[A-Za-z0-9_-]+', password):
         p.error('Use 8–63 letters, digits, underscores or hyphens')
-    if password != getpass.getpass('WLAN-Passwort wiederholen: '):
+    if not existing and password != getpass.getpass('WLAN-Passwort wiederholen: '):
         p.error('Passwords differ')
-    token = secrets.token_hex(32)
+    token = existing['CONTROLLER_TOKEN'] if existing else secrets.token_hex(32)
+    if not re.fullmatch(r'[A-Za-z0-9_-]{32,128}', token):
+        p.error('Invalid controller token')
     config_dir.mkdir(mode=0o700)
     destination.mkdir()
     shutil.copytree(ROOT/'controller', destination/'controller', ignore=shutil.ignore_patterns('__pycache__'))
