@@ -161,6 +161,25 @@ systemctl status imac-tdm-gadget imac-tdm-controller
 journalctl -u imac-tdm-controller -b
 ```
 
+### Hotspot mit hostapd auf dem ursprünglichen Zero W
+
+Beim getesteten Zero W Rev 1.1 konnte sich der TinyPICO nicht am NetworkManager-
+Hotspot anmelden. Die WPA2-Verbindung mit `hostapd` funktioniert. Nach der normalen
+Pi-Installation lässt sich der Hotspot umstellen:
+
+```sh
+sudo apt install hostapd dnsmasq-base
+sudo python3 scripts/setup-hostapd.py
+sudo reboot
+```
+
+Das übernimmt WLAN-Name und Passwort, verwendet WPA2/AES auf Kanal 6 und richtet
+DHCP sowie die lokale Route ein. Der Taster behält seine Konfiguration. Diese
+Fassung verwendet das WLAN-Land **DE**. SSH bleibt unter `192.168.77.1` erreichbar;
+der AP bietet keinen Internetzugang. Die vorherige NetworkManager-Konfiguration
+liegt zur Wiederherstellung unter
+`/etc/imac-tdm-controller/networkmanager-backup.nmconnection`.
+
 ## 5. WLAN-Taster installieren
 
 Der Installer fragt nach dem Board und zeigt **am Ende die richtigen GPIOs** an:

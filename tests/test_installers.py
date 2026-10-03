@@ -139,3 +139,21 @@ class MonitorModeTests(unittest.TestCase):
                 self.assertFalse(output.exists())
         with self.assertRaises(ValueError): build.grub_config(tdm_only=True,tdm_autostart=True)
         with self.assertRaises(ValueError): build.grub_config('1234','/EFI/a.efi',tdm_only=True)
+
+class HostapdTests(unittest.TestCase):
+    def test_hostapd_has_wpa2_route_and_controller_dependencies(self):
+        h = module('hostapd_setup', 'scripts/setup-hostapd.py')
+        files = h.configuration('iMac-TDM', 'test-password')
+        ap = files['/etc/imac-tdm-controller/hostapd.conf']
+        self.assertIn('wpa=2\n', ap)
+        self.assertIn('rsn_pairwise=CCMP\n', ap)
+        self.assertNotIn('TKIP', ap)
+        self.assertIn('ip route replace 192.168.77.0/24', files['/etc/systemd/system/imac-tdm-ap-address.service'])
+        override = files['/etc/systemd/system/imac-tdm-controller.service.d/hostapd.conf']
+        self.assertIn('Requires=imac-tdm-ap.service imac-tdm-dhcp.service', override)
+        self.assertIn('ExecStartPre=\n', override)
+
+    def test_hostapd_rejects_config_injection(self):
+        h = module('hostapd_validation', 'scripts/setup-hostapd.py')
+        for ssid, password in [('bad\nssid', 'test-password'), ('iMac-TDM', 'password\nwpa=0'), ('iMac-TDM', 'short')]:
+            with self.assertRaises(ValueError): h.configuration(ssid, password)

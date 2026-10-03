@@ -2,7 +2,7 @@
 
 ## Lokal durchgeführt
 
-- 22 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
+- 24 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
   kein zusätzlicher Kurzdruck nach langem Halten, kein Befehl bei gedrücktem Taster
   nach Neustart/Verbindungswechsel, Zustandstabelle, Ticketablauf und doppelte
   Requests, Phasenwechsel, Sperre während Boot, HID-Schreibfehler, Power-Release,
@@ -77,3 +77,13 @@ Kurzer und langer Tastendruck wurden danach am echten TinyPICO auf GPIO25/GND
 registriert. Über einen ThinkPad-Hotspot kamen beide Ereignisse authentifiziert
 bei der Controller-Testgegenstelle an (`boot_tinycore`, danach `power`). Die
 USB-Ausgabe war dabei simuliert; es wurde kein Rechner heruntergefahren.
+
+## Pi Zero W Rev 1.1: WPA2-Hotspot
+
+Auf dem echten Zero W funktionierte die TinyPICO-Anmeldung mit hostapd und WPA2/AES.
+Der TinyPICO erhielt eine DHCP-Adresse und eine authentifizierte HTTP-Statusanfrage
+wurde mit 200 beantwortet. Nach dauerhafter Einrichtung und Pi-Neustart waren
+AP, DHCP, Controller und USB-Gadget aktiv; SSH war erreichbar, der TinyPICO
+meldete sich nach seinem Neustart automatisch erneut an. Die explizite lokale
+Route verhindert den beim ersten Wechsel beobachteten Ausfall des IP-Zugangs.
+Die tatsächliche USB-Tastenübertragung wird separat geprüft.
