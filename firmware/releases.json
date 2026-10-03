@@ -1,0 +1,23 @@
+{
+  "pico-w": {
+    "board_id": "raspberry_pi_pico_w",
+    "version": "10.3.1",
+    "url": "https://downloads.circuitpython.org/bin/raspberry_pi_pico_w/en_US/adafruit-circuitpython-raspberry_pi_pico_w-en_US-10.3.1.uf2",
+    "size": 3092992,
+    "sha256": "dad7ba4f22ef7856c9195b09d136908d76c7485b22a70f228b5ea705997e4451"
+  },
+  "esp32-devkitc": {
+    "board_id": "espressif_esp32_devkitc_v4_wroom_32e",
+    "version": "10.3.1",
+    "url": "https://downloads.circuitpython.org/bin/espressif_esp32_devkitc_v4_wroom_32e/en_US/adafruit-circuitpython-espressif_esp32_devkitc_v4_wroom_32e-en_US-10.3.1.bin",
+    "size": 1810976,
+    "sha256": "d1e4b985bd263fd0018ddbc373d01ada15305cad195dfbb14ba4e7ea514b33b9"
+  },
+  "esp32": {
+    "board_id": "doit_esp32_devkit_v1",
+    "version": "10.3.1",
+    "url": "https://downloads.circuitpython.org/bin/doit_esp32_devkit_v1/en_US/adafruit-circuitpython-doit_esp32_devkit_v1-en_US-10.3.1.bin",
+    "size": 1812096,
+    "sha256": "e295e1f73324635f2337747db2aa21b58e1a2a4d1ba0187416d5f9735f51ba9a"
+  }
+}

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+work/
+build/
+config.json
+secrets.h
+*.img
+*.fd
+.venv/
+button-settings.toml
+settings.toml

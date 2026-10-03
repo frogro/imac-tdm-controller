@@ -1,0 +1,18 @@
+name: Validate controller and installers
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Python and protocol tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Compile TinyCore power handler
+        run: gcc -static -Os -Wall -Wextra -Werror -o /tmp/tdm-power-listener tinycore/power-listener.c
+      - name: Syntax and whitespace
+        run: |
+          python3 -m compileall -q controller scripts firmware/circuitpython
+          sh -n linux/install-power-key.sh tinycore/bootlocal.sh
+          git diff --check
