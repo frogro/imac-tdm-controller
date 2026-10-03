@@ -10,7 +10,7 @@ import re
 import secrets
 import shutil
 import subprocess
-import uuid
+import runpy
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +50,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--image', type=Path, required=True)
     p.add_argument('--ssid')
+    p.add_argument('--country', default='DE', help='WLAN-Land, z. B. DE')
     p.add_argument('--settings', type=Path, help='Vorhandene vertrauliche Taster-Konfiguration übernehmen')
     args = p.parse_args()
     model_file = Path('/proc/device-tree/model')
@@ -58,10 +59,12 @@ def main():
         p.error('Run this installer on the dedicated Pi Zero W/Zero 2 W, not the iMac/build PC')
     if os.geteuid() != 0:
         p.error('Run with sudo')
-    for command in ('nmcli', 'systemctl', 'modprobe'):
+    for command in ('nmcli', 'systemctl', 'modprobe', 'hostapd', 'dnsmasq', 'ip'):
         if shutil.which(command) is None:
             p.error('Install required tool first: '+command)
     existing = load_button_settings(args.settings) if args.settings else None
+    if existing and args.ssid and args.ssid != existing['BUTTON_WIFI_SSID']:
+        p.error('--ssid differs from the already configured button')
     args.ssid = args.ssid or (existing['BUTTON_WIFI_SSID'] if existing else 'iMac-TDM')
     if not re.fullmatch(r'[A-Za-z0-9_-]{1,32}', args.ssid):
         p.error('SSID: use 1–32 letters, digits, underscores or hyphens')
@@ -91,6 +94,9 @@ def main():
     token = existing['CONTROLLER_TOKEN'] if existing else secrets.token_hex(32)
     if not re.fullmatch(r'[A-Za-z0-9_-]{32,128}', token):
         p.error('Invalid controller token')
+    # Use the same tested AP configuration for fresh installs and migrations.
+    ap_configuration = runpy.run_path(str(ROOT/'scripts/setup-hostapd.py'))['configuration']
+    ap_files = ap_configuration(args.ssid, password, args.country)
     config_dir.mkdir(mode=0o700)
     destination.mkdir()
     shutil.copytree(ROOT/'controller', destination/'controller', ignore=shutil.ignore_patterns('__pycache__'))
@@ -101,27 +107,8 @@ def main():
     config = dict(image=str(target/'boot.img'), state_offset=meta['state_offset'],
                   serial=secrets.token_hex(8), token=token, listen='192.168.77.1', port=8080)
     write(config_dir/'config.json', json.dumps(config, indent=2)+'\n', 0o600)
-    connection_uuid = str(uuid.uuid4())
-    write(Path('/etc/NetworkManager/system-connections/imac-tdm.nmconnection'), f'''[connection]
-id=imac-tdm
-uuid={connection_uuid}
-type=wifi
-interface-name=wlan0
-autoconnect=true
-autoconnect-priority=100
-[wifi]
-mode=ap
-ssid={args.ssid}
-band=bg
-[wifi-security]
-key-mgmt=wpa-psk
-psk={password}
-[ipv4]
-method=shared
-address1=192.168.77.1/24
-[ipv6]
-method=disabled
-''', 0o600)
+    for name, content in ap_files.items():
+        write(Path(name), content, 0o600 if name.startswith('/etc/imac-tdm-controller/') else 0o644)
     # Backup, then enable the Pi device controller on its USB data port.
     shutil.copyfile(boot, config_dir/'config.txt.before')
     write(boot, old.rstrip()+'\n\n# iMac TDM USB device\n[all]\ndtoverlay=dwc2,dr_mode=peripheral\n')
@@ -145,7 +132,6 @@ Requires=imac-tdm-gadget.service NetworkManager.service
 After=imac-tdm-gadget.service NetworkManager.service
 [Service]
 WorkingDirectory=/opt/imac-tdm-controller
-ExecStartPre=/usr/bin/nmcli connection up imac-tdm
 ExecStart=/usr/bin/python3 -m controller.server --config /run/imac-tdm-controller/config.json
 Restart=on-failure
 RestartSec=5
@@ -158,7 +144,7 @@ WantedBy=multi-user.target
     write(config_dir/'button-settings.toml', settings, 0o600)
     subprocess.run(['systemctl', 'daemon-reload'], check=True)
     subprocess.run(['systemctl', 'enable', 'imac-tdm-gadget.service', 'imac-tdm-controller.service'], check=True)
-    print('Installiert. WLAN-Land mit raspi-config setzen, dann Pi neu starten.')
+    print('Installiert: WPA2/AES mit hostapd, Kanal 6, WLAN-Land '+args.country+'. Pi neu starten.')
     print('Taster-Konfiguration: /etc/imac-tdm-controller/button-settings.toml (vertraulich).')
     print('Beim Neustart wechselt wlan0 in den AP-Modus; bestehende WLAN-Verbindungen enden.')
 

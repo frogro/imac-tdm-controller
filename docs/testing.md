@@ -2,7 +2,7 @@
 
 ## Lokal durchgeführt
 
-- 24 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
+- 25 automatisierte Tests mit Python `unittest`: Entprellung, kurzer/langer Druck,
   kein zusätzlicher Kurzdruck nach langem Halten, kein Befehl bei gedrücktem Taster
   nach Neustart/Verbindungswechsel, Zustandstabelle, Ticketablauf und doppelte
   Requests, Phasenwechsel, Sperre während Boot, HID-Schreibfehler, Power-Release,

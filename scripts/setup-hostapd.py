@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 """Switch an installed dedicated Pi controller to a WPA2 hostapd access point."""
+import argparse
 import configparser
+import re
 import os
 from pathlib import Path
 import shutil
 import subprocess
 
 
-def configuration(ssid, password):
+def configuration(ssid, password, country="DE"):
+    if not re.fullmatch(r"[A-Z]{2}", country):
+        raise ValueError("WLAN country must be a two-letter code, e.g. DE")
     if not 1 <= len(ssid.encode()) <= 32 or not 8 <= len(password) <= 63:
         raise ValueError('Invalid SSID or password length')
     if any(c in ssid + password for c in '\r\n\x00'):
         raise ValueError('Invalid newline in wireless credentials')
     return {
         '/etc/imac-tdm-controller/hostapd.conf': (
-            'interface=wlan0\ndriver=nl80211\ncountry_code=DE\n'
+            f'interface=wlan0\ndriver=nl80211\ncountry_code={country}\n'
             f'ssid={ssid}\nhw_mode=g\nchannel=6\nwmm_enabled=1\nauth_algs=1\n'
             f'wpa=2\nwpa_key_mgmt=WPA-PSK\nrsn_pairwise=CCMP\nwpa_passphrase={password}\n'),
         '/etc/imac-tdm-controller/dnsmasq.conf': (
@@ -65,6 +69,9 @@ ExecStartPre=
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--country', default='DE', help='WLAN-Land, z. B. DE')
+    args = parser.parse_args()
     model = Path('/proc/device-tree/model')
     if not model.exists() or 'Raspberry Pi Zero' not in model.read_text():
         raise SystemExit('Run on the dedicated Pi Zero controller')
@@ -78,7 +85,7 @@ def main():
         raise SystemExit('Install the controller with install-pi.py first')
     c = configparser.ConfigParser(interpolation=None)
     c.read(source)
-    files = configuration(c['wifi']['ssid'], c['wifi-security']['psk'])
+    files = configuration(c['wifi']['ssid'], c['wifi-security']['psk'], args.country)
     backup = Path('/etc/imac-tdm-controller/networkmanager-backup.nmconnection')
     if not backup.exists():
         shutil.copyfile(source, backup)

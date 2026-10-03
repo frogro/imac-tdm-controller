@@ -77,6 +77,59 @@ class InstallerTests(unittest.TestCase):
             path.write_text(text.replace('a'*64, 'short'))
             with self.assertRaises(ValueError): pi.load_button_settings(path)
 
+    def test_fresh_pi_install_configures_hostapd_and_preserves_credentials(self):
+        pi = module('pi_fresh', 'scripts/install-pi.py')
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            def sandbox_path(value):
+                path = Path(value)
+                if path.parts[1:2] in [('etc',), ('proc',), ('opt',), ('var',), ('boot',)]:
+                    return root / path.relative_to('/')
+                return path
+            model = sandbox_path('/proc/device-tree/model')
+            model.parent.mkdir(parents=True)
+            model.write_text('Raspberry Pi Zero W Rev 1.1\0')
+            boot = sandbox_path('/boot/firmware/config.txt')
+            boot.parent.mkdir(parents=True)
+            boot.write_text('[cm5]\ndtoverlay=dwc2,dr_mode=host\n[all]\n')
+            (boot.parent/'cmdline.txt').write_text('console=tty1 rootwait\n')
+            sandbox_path('/etc').mkdir()
+            sandbox_path('/opt').mkdir()
+            sandbox_path('/var/lib').mkdir(parents=True)
+            image = root/'test.img'
+            image.write_bytes(b'test image')
+            image.with_suffix('.json').write_text(json.dumps({
+                'sha256': pi.hashlib.sha256(image.read_bytes()).hexdigest(),
+                'image_size': image.stat().st_size, 'state_offset': 0,
+            }))
+            settings = root/'settings.toml'
+            settings.write_text(button.settings_text(button.PROFILES['tinypico'],
+                'iMac-TDM', 'test-password', '192.168.77.1', 'a'*64))
+            with patch.object(pi, 'Path', side_effect=sandbox_path), \
+                 patch.object(pi.os, 'geteuid', return_value=0), \
+                 patch.object(pi.shutil, 'which', return_value='/test/tool'), \
+                 patch.object(pi.subprocess, 'run') as run, \
+                 patch('sys.argv', ['install-pi.py', '--image', str(image),
+                     '--settings', str(settings), '--country', 'AT']), \
+                 patch('builtins.print'):
+                pi.main()
+            config_dir = sandbox_path('/etc/imac-tdm-controller')
+            self.assertEqual(json.loads((config_dir/'config.json').read_text())['token'], 'a'*64)
+            ap = config_dir/'hostapd.conf'
+            self.assertIn('country_code=AT\n', ap.read_text())
+            self.assertIn('wpa=2\n', ap.read_text())
+            self.assertEqual(ap.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(button.parse_settings(config_dir/'button-settings.toml')['BUTTON_WIFI_PASSWORD'], 'test-password')
+            units = sandbox_path('/etc/systemd/system')
+            self.assertIn('Requires=imac-tdm-ap.service imac-tdm-dhcp.service',
+                (units/'imac-tdm-controller.service.d/hostapd.conf').read_text())
+            for name in ('imac-tdm-ap', 'imac-tdm-ap-address', 'imac-tdm-dhcp'):
+                self.assertTrue((units/(name+'.service')).is_file())
+            self.assertNotIn('nmcli connection up', (units/'imac-tdm-controller.service').read_text())
+            self.assertFalse(sandbox_path('/etc/NetworkManager/system-connections/imac-tdm.nmconnection').exists())
+            run.assert_any_call(['systemctl', 'enable', 'imac-tdm-gadget.service',
+                'imac-tdm-controller.service'], check=True)
+
     def test_pi_stock_cm5_overlay_does_not_block_zero(self):
         pi = module('pi_overlay', 'scripts/install-pi.py')
         self.assertFalse(pi.has_existing_dwc2('[cm5]\ndtoverlay=dwc2,dr_mode=host\n[all]\n'))
@@ -155,5 +208,7 @@ class HostapdTests(unittest.TestCase):
 
     def test_hostapd_rejects_config_injection(self):
         h = module('hostapd_validation', 'scripts/setup-hostapd.py')
+        for country in ('de', 'DE\nwpa=0', ''):
+            with self.assertRaises(ValueError): h.configuration('iMac-TDM', 'test-password', country)
         for ssid, password in [('bad\nssid', 'test-password'), ('iMac-TDM', 'password\nwpa=0'), ('iMac-TDM', 'short')]:
             with self.assertRaises(ValueError): h.configuration(ssid, password)

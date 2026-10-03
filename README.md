@@ -22,8 +22,8 @@ Bootauswahl werden weitere Aktionen 20 Sekunden gesperrt. Ein während einer
 WLAN-Unterbrechung gedrückter Taster führt später keine Aktion aus.
 
 **Erste Implementierung für Hardwaretests.** Die Logik ist automatisiert geprüft;
-Bootabläufe werden mit QEMU getestet. USB-Gadget, WLAN und Power-Taste müssen noch
-mit Pi, Taster und iMac gemeinsam geprüft werden. Der tatsächliche Displayzustand
+Bootabläufe werden mit QEMU getestet. WLAN und echte USB-Tasten wurden mit
+TinyPICO, Pi Zero W Rev 1.1 und ThinkPad geprüft. Der gemeinsame Test am iMac steht noch aus. Der tatsächliche Displayzustand
 wird noch nicht ermittelt. Details stehen in [Tests und Grenzen](docs/testing.md).
 
 ## Benötigt
@@ -130,15 +130,17 @@ Projekt sowie Image **und dessen gleichnamige `.json`-Datei** auf den Pi kopiere
 Auf dem Pi:
 
 ```sh
-sudo apt install python3 network-manager
+sudo apt install python3 network-manager hostapd dnsmasq-base iproute2
 sudo python3 scripts/install-pi.py --image /pfad/imac-boot.img
 ```
 
 Der Installer prüft das Pi-Modell, fragt nach einem neuen WLAN-Passwort, richtet
-`iMac-TDM` als eigenes WLAN ein und installiert die USB-/Controller-Dienste.
+`iMac-TDM` als WPA2/AES-WLAN mit hostapd auf Kanal 6 ein und installiert
+DHCP sowie die USB-/Controller-Dienste. Der Hotspot ist lokal und bietet keinen Internetzugang.
 Mit `--ssid MEIN-NAME` lässt sich der WLAN-Name ändern.
 
-Danach mit `sudo raspi-config` das WLAN-Land setzen und den Pi neu starten.
+Das WLAN-Land ist standardmäßig **DE**; mit `--country AT` beispielsweise Österreich wählen.
+Danach den Pi mit `sudo reboot` neu starten.
 **Die bisherige WLAN-Verbindung des Pi wird durch den Access Point ersetzt.**
 Zur Einrichtung lokalen Zugriff oder eine zweite Verbindung bereithalten.
 
@@ -157,15 +159,15 @@ kopieren. Der API-Schlüssel wird nicht auf der Konsole ausgegeben.
 Die Dienste starten nach dem Neustart. Diagnose auf dem Pi:
 
 ```sh
-systemctl status imac-tdm-gadget imac-tdm-controller
+systemctl status imac-tdm-ap imac-tdm-dhcp imac-tdm-gadget imac-tdm-controller
 journalctl -u imac-tdm-controller -b
 ```
 
-### Hotspot mit hostapd auf dem ursprünglichen Zero W
+### Bestehende Installation mit altem NetworkManager-Hotspot umstellen
 
 Beim getesteten Zero W Rev 1.1 konnte sich der TinyPICO nicht am NetworkManager-
-Hotspot anmelden. Die WPA2-Verbindung mit `hostapd` funktioniert. Nach der normalen
-Pi-Installation lässt sich der Hotspot umstellen:
+Hotspot anmelden. **Neue Installationen verwenden deshalb direkt hostapd.**
+Nur für eine bereits vorhandene Installation mit dem alten Hotspot:
 
 ```sh
 sudo apt install hostapd dnsmasq-base
@@ -175,7 +177,7 @@ sudo reboot
 
 Das übernimmt WLAN-Name und Passwort, verwendet WPA2/AES auf Kanal 6 und richtet
 DHCP sowie die lokale Route ein. Der Taster behält seine Konfiguration. Diese
-Fassung verwendet das WLAN-Land **DE**. SSH bleibt unter `192.168.77.1` erreichbar;
+Fassung verwendet standardmäßig das WLAN-Land **DE** (`--country` zum Ändern). SSH bleibt unter `192.168.77.1` erreichbar;
 der AP bietet keinen Internetzugang. Die vorherige NetworkManager-Konfiguration
 liegt zur Wiederherstellung unter
 `/etc/imac-tdm-controller/networkmanager-backup.nmconnection`.

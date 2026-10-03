@@ -186,7 +186,7 @@ def install_esp(profile, files, fresh):
         import esptool
     except ImportError:
         raise ValueError('ESP32 benötigt: python3 -m pip install pyserial esptool (in einer venv)') from None
-    ports = list(serial.tools.list_ports.comports())
+    ports = sorted((p for p in serial.tools.list_ports.comports() if p.vid is not None), key=lambda p: p.device)
     if not ports:
         raise ValueError('Kein serieller USB-Port gefunden')
     for i, port in enumerate(ports, 1):
