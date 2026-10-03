@@ -86,4 +86,9 @@ wurde mit 200 beantwortet. Nach dauerhafter Einrichtung und Pi-Neustart waren
 AP, DHCP, Controller und USB-Gadget aktiv; SSH war erreichbar, der TinyPICO
 meldete sich nach seinem Neustart automatisch erneut an. Die explizite lokale
 Route verhindert den beim ersten Wechsel beobachteten Ausfall des IP-Zugangs.
-Die tatsächliche USB-Tastenübertragung wird separat geprüft.
+Danach wurde die vollständige Kette TinyPICO → WPA2 → Pi → USB am ThinkPad
+geprüft: kurzer Druck lieferte KEY_T (20), langer Druck KEY_POWER (116), jeweils
+mit Press- und Release-Ereignis. Die GRUB-/TinyCore-Zustände waren dafür simuliert;
+beide Eingabegeräte wurden exklusiv abgefangen, kein Rechner wurde heruntergefahren.
+Anschließend wurde der Status auf `unknown` zurückgesetzt und der Testempfänger
+beendet. Reale iMac-Bootauswahl, Displayumschaltung und Shutdown bleiben offen.
