@@ -61,8 +61,10 @@ Zusätzliche Tests prüfen beide Konfigurationen ohne internes Bootziel sowie
 unzulässige Kombinationen von Modus und interner Partition. Für beide Modi wurden
 vollständige Images erzeugt. Der Autostart bootet in QEMU ohne Tastenaktion und ohne
 zusätzliches internes Laufwerk bis zur TinyCore-Konsole (`phase=tinycore`).
-Der wartende Modus bleibt nach `l` mit dem Hinweis auf das fehlende interne Linux
-im Menü (`phase=menu`); `t` startet anschließend TinyCore (`phase=tinycore`).
+Im ursprünglichen wartenden Modus wurde die Rückkehr ins Menü nach `l` und der
+TinyCore-Start nach `t` geprüft. Aktuell führt `l` in den Monitor-Modi stattdessen
+GRUBs `halt` zum Ausschalten aus; die Menüerzeugung ist automatisiert geprüft.
+Das Ausschalten aus GRUB muss noch am echten iMac geprüft werden.
 
 ## TinyPICO am ThinkPad
 

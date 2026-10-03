@@ -12,7 +12,8 @@ WLAN-Taster ── eigenes Pi-WLAN ── Pi Zero (2) W ── USB ── iMac
 
 | Zustand | Kurz drücken | 3 Sekunden halten |
 | --- | --- | --- |
-| GRUB wartet ohne Zeitlimit | TinyCore und TDM starten | Internes Linux starten |
+| GRUB wartet: mit internem Linux | TinyCore und TDM starten | Internes Linux starten |
+| GRUB wartet: nur Monitor | TinyCore und TDM starten | iMac ausschalten |
 | TinyCore/TDM ausgewählt | Keine Aktion | Power-Taste: herunterfahren |
 | Internes Linux ausgewählt | Keine Aktion | Power-Taste: herunterfahren |
 
@@ -101,7 +102,7 @@ statt Downloads einen vollständigen lokalen Checkout mit gültigem Manifest.
 ### Ohne interne HDD/SSD: zwei Monitor-Optionen
 
 **Auf Tastendruck warten:** GRUB bleibt im Menü. Kurz drücken startet TinyCore/TDM.
-Langes Drücken zeigt „Kein internes Linux eingerichtet“ und kehrt ins Menü zurück.
+Langes Drücken wählt „Poweroff - Ausschalten (lang / L)“ und schaltet den iMac direkt aus dem Bootmenü aus.
 
 ```sh
 python3 scripts/build-image.py --tdm-only --output build/tdm-only.img
@@ -286,7 +287,7 @@ Anzeige zurück“ ist keine Aktion des WLAN-Tasters.
 1. Pi starten und warten, bis sein WLAN und USB-Gerät verfügbar sind.
 2. Beim iMac zunächst mit Alt/Option das USB-EFI-Bootmedium wählen.
 3. Standard: GRUB wartet unbegrenzt; kurz für TDM, lange für internes Linux.
-   Mit `--tdm-only` gibt es kein internes Bootziel; mit `--tdm-autostart` entfällt
+   Mit `--tdm-only` schaltet langes Drücken im Menü den iMac aus; mit `--tdm-autostart` entfällt
    die Menüwartezeit.
 4. Im laufenden System löst erneutes langes Drücken die HID-Power-Taste aus.
 

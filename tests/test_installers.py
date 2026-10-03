@@ -175,7 +175,10 @@ class MonitorModeTests(unittest.TestCase):
             self.assertNotIn('set phase=linux', config)
             self.assertIn('--hotkey=t', config)
             self.assertIn('--hotkey=l', config)
-            self.assertIn('Kein internes Linux eingerichtet', config)
+            self.assertIn('Poweroff - Ausschalten (lang / L)', config)
+            power_entry = config.split('--hotkey=l {', 1)[1]
+            self.assertIn('\n  halt\n', power_entry)
+            self.assertNotIn('Kein internes Linux eingerichtet', config)
             # Failed autostart must stop at the menu rather than loop.
             self.assertIn('  set timeout=-1\n  set root=$tdm_disk\n  if linux', config)
 

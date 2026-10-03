@@ -107,9 +107,10 @@ menuentry "TinyCore - Monitorbetrieb (kurz / T)" --hotkey=t {{
 }}
 '''
     if monitor_only:
-        config += '''menuentry "Kein internes Linux eingerichtet (lang / L)" --hotkey=l {
+        config += '''menuentry "Poweroff - Ausschalten (lang / L)" --hotkey=l {
   set timeout=-1
-  echo "Kein internes Linux eingerichtet. Kurz druecken / T startet TDM."
+  halt
+  echo "Ausschalten fehlgeschlagen. Bitte den Einschaltknopf verwenden."
   set phase=menu
   save_env -f ($tdm_disk)/STATE.ENV phase
   sleep 3
@@ -210,7 +211,7 @@ def main():
         (payload/'boot/controller.gz').write_bytes(gzip.compress(archive, mtime=0))
         embedded = work/'embedded.cfg'
         embedded.write_text('search --no-floppy --label TINYCORE --set=root\nconfigfile /grub.cfg\n')
-        run('grub-mkstandalone', '-O', 'x86_64-efi', '--locales=', '--fonts=', '--modules=part_gpt fat search search_label search_fs_uuid normal configfile loadenv chain linux sleep',
+        run('grub-mkstandalone', '-O', 'x86_64-efi', '--locales=', '--fonts=', '--modules=part_gpt fat search search_label search_fs_uuid normal configfile loadenv chain linux sleep halt',
             '-o', str(payload/'EFI/BOOT/BOOTX64.EFI'), f'boot/grub/grub.cfg={embedded}')
         run('grub-editenv', str(payload/'STATE.ENV'), 'create')
         run('grub-editenv', str(payload/'STATE.ENV'), 'set', 'phase=unknown')
